@@ -1,0 +1,52 @@
+---
+title: "k_means vs GMM"
+output: html_document
+date: "2023-12-02"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1 Simulate Data
+We will begin by simulating some data to do principal component analysis (PCA) and clustering on. Use the following provided code to simulate data for this exercise. We will be simulating data from two groups.
+
+## load in required libraries 
+library(hbim)
+library(mvtnorm)
+
+## set a seed for reproducibility
+set.seed(12345)
+
+## create an exhangeable variance covariance for the data
+sigma <- make.v(n = 100, r = .6, sig2 = 1)
+
+## create centers for the two clusters. 
+center_1 <- rep(1, 100)
+center_2 <- rep(3, 100)
+
+## simulate data for two groups from a multivariate normal distribution 
+data = rbind(rmvnorm(50, mean = center_1, sigma = sigma),
+             rmvnorm(50, mean = center_2, sigma = sigma))
+
+## add a group label to the data 
+data = data.frame(group = c(rep(1, 50), rep(2, 50)),
+                  data) 
+2 Visualize the Data
+Next we will visualize the data.
+
+Create density plots colored by group membership of the first three variables in the dataset. Comment on what you observe.
+Look at the correlation of the data using corrplot::corrplot. Comment on what you observe.
+3 Perform PCA on the Data
+Perform PCA on the data.
+Make a plot of the cumulative variance explained by the PCs.
+Make bivariate plots of all combinations of the scores on the first, second, and third PC colored by group membership.
+4 Cluster
+Cluster the original data into 2 clusters using
+k-means
+Gaussian mixture model
+Create a contingency matrix with the true cluster labels to summarize each clustering result.
+
+Rather than performing clustering on the entire data matrix, we can simply perform clustering on the first few principal component score vectors. Sometimes performing clustering on the first few principal component score vectors can give better results than performing clustering on the full data with the results. Repeat the two clustering methods with the first 10 principal component scores and create a contingency matrix.
+
+Comment on what you observe.
