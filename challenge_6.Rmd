@@ -5,12 +5,15 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
+## link: https://github.com/mezlulu/Data_Challenge6
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## 1 Simulate Data
 We will begin by simulating some data to do principal component analysis (PCA) and clustering on. Use the following provided code to simulate data for this exercise. We will be simulating data from two groups.
+
 ```{r}
 ## load in required libraries 
 library(hbim)
@@ -66,7 +69,10 @@ corr_matrix <- cor(data[,2:4])  # correlation plot for the first 3 variables, ex
 corrplot(corr_matrix)
 
 ```
+
 ## 3 Perform PCA on the Data
+
+
 ```{r}
 # Load necessary library
 library(FactoMineR)
