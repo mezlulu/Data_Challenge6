@@ -1,0 +1,114 @@
+---
+title: "challenge6"
+author: "menglu zhao"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1 Simulate Data
+We will begin by simulating some data to do principal component analysis (PCA) and clustering on. Use the following provided code to simulate data for this exercise. We will be simulating data from two groups.
+```{r}
+## load in required libraries 
+library(hbim)
+library(mvtnorm)
+
+## set a seed for reproducibility
+set.seed(12345)
+
+## create an exhangeable variance covariance for the data
+sigma <- make.v(n = 100, r = .6, sig2 = 1)
+
+## create centers for the two clusters. 
+center_1 <- rep(1, 100)
+center_2 <- rep(3, 100)
+
+## simulate data for two groups from a multivariate normal distribution 
+data = rbind(rmvnorm(50, mean = center_1, sigma = sigma),
+             rmvnorm(50, mean = center_2, sigma = sigma))
+
+## add a group label to the data 
+data = data.frame(group = c(rep(1, 50), rep(2, 50)),
+                  data) 
+```
+
+## 2 Visualize the Data
+
+Comments on density plots: Each plot shows two overlapping density curves, representing two different groups in the dataset. The degree of overlap between the two groups can be indicative of how well-separated the groups are based on that variable. Less overlap would suggest a variable is good at distinguishing between the groups. In all three plots, there is a significant overlap between the two groups, there is similarity between the groups for these variables. The shape of the distributions appears to be approximately normal (bell-shaped) for all three variables. The spread or variance seems to be similar for both groups in each variable, suggesting equal variances across the groups.
+
+Comments on the correlation plots: All the pairwise correlations between variables X1, X2, and X3 are strongly positive as indicated by the large and dark-colored circles in the correlation matrix. This suggests that as the value of one variable increases, the values of the others tend to increase as well. These variables move together and are likely influenced by similar factors. 
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(corrplot)
+
+# Density plots for the first three variables
+ggplot(data, aes(x = X1, fill = factor(group))) + 
+  geom_density(alpha = 0.5) + 
+  theme_minimal() + 
+  ggtitle("Density Plot for Variable 1")
+
+ggplot(data, aes(x = X2, fill = factor(group))) + 
+  geom_density(alpha = 0.5) + 
+  theme_minimal() + 
+  ggtitle("Density Plot for Variable 2")
+
+ggplot(data, aes(x = X3, fill = factor(group))) + 
+  geom_density(alpha = 0.5) + 
+  theme_minimal() + 
+  ggtitle("Density Plot for Variable 3")
+
+# Correlation plot
+corr_matrix <- cor(data[,2:4])  # correlation plot for the first 3 variables, exclude the group column
+corrplot(corr_matrix)
+
+```
+## 3 Perform PCA on the Data
+```{r}
+# Load necessary library
+library(FactoMineR)
+
+pca_result <- PCA(data[, -1], graph = FALSE)
+# Calculate cumulative variance
+cumulative_variance <- cumsum(pca_result$eig[, 2]) / sum(pca_result$eig[, 2])
+
+# Plot of cumulative variance
+plot(cumulative_variance, type = "b", xlab = "Principal Component", 
+     ylab = "Cumulative Variance Explained", main = "Cumulative Variance Plot")
+
+# Bivariate plots for the first three PCs
+pairs(pca_result$ind$coord[,1:3], col = as.factor(data$group), 
+      main = "Pairs Plot of the First Three Principal Components")
+
+```
+
+## 4 Cluster
+
+For the true label 1, most instances (45 out of 50) were classified into Cluster 2, whereas for the true label 2, a majority (41 out of 50) were classified into Cluster 1. This indicates that K-Means has effectively inverted the clusters with respect to the true labels. The misclassification rate for K-Means is relatively high.
+
+For the true label 1, a majority (45 out of 50) were correctly classified into Cluster 1, and similarly for the true label 2, most instances (49 out of 50) were correctly classified into Cluster 1. This indicates that GMM has performed much better in terms of aligning with the true labels compared to K-Means. The misclassification rate for GMM is much lower.
+
+It can be concluded that the Gaussian Mixture Model (GMM) worked better than k-means for this particular dataset.
+
+```{r}
+
+num_pcs <- ncol(pca_result$ind$coord)
+num_pcs_to_use <- min(num_pcs, 10)  
+
+# Extracting the principal component scores
+pca_scores <- pca_result$ind$coord[, 1:num_pcs_to_use]
+
+# K-means clustering on PCA scores
+kmeans_pca_result <- kmeans(pca_scores, centers = 2)
+table(data$group, kmeans_pca_result$cluster)  # Contingency matrix
+
+# Gaussian mixture model on PCA scores
+library(mclust)
+gmm_pca_result <- Mclust(pca_scores, G = 2)
+table(data$group, (gmm_pca_result)$classification)  # Contingency matrix
+
+```
+
